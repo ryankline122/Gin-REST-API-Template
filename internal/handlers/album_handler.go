@@ -25,7 +25,10 @@ func (h *AlbumHandler) AddAlbum(c *gin.Context) {
 }
 
 func (h *AlbumHandler) GetAlbums(c *gin.Context) {
-    albums := h.AlbumService.GetAllAlbums()
+    albums, err := h.AlbumService.GetAllAlbums()
+    if err != nil {
+        c.JSON(http.StatusNotFound, err)
+    }
     c.JSON(http.StatusOK, albums)
 }
 
