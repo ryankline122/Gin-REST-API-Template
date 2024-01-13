@@ -11,7 +11,10 @@ func SetupRouter(albumHandler *handlers.AlbumHandler) *gin.Engine {
     albumGroup := router.Group("albums/")
     {
         albumGroup.GET("/", albumHandler.GetAlbums)
-        // Add more routes as needed
+        albumGroup.GET("/:id", albumHandler.GetAlbumByID)
+        albumGroup.POST("/", albumHandler.AddAlbum)
+        albumGroup.POST("/update/:id/", albumHandler.UpdateAlbumPrice)
+        albumGroup.DELETE("/:id", albumHandler.DeleteAlbumByID)
     }
 
     return router
