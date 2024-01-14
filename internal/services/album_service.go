@@ -3,9 +3,7 @@ package services
 import (
 	"database/sql"
 	"errors"
-	"example/web-service-gin/data"
 	"example/web-service-gin/internal/models"
-	"fmt"
 )
 
 type AlbumService struct {
@@ -13,8 +11,18 @@ type AlbumService struct {
 }
 
 // Create
-func (s *AlbumService) AddAlbum(album models.Album) {
-    data.Data = append(data.Data, album)
+func (s *AlbumService) AddAlbum(album models.Album) error {
+    query := `
+        INSERT INTO album (title, artist, price)
+        VALUES ($1, $2, $3);
+    `
+
+    _, err := s.DatabaseConnection.Exec(query, album.Title, album.Artist, album.Price)
+    if err != nil {
+       return err 
+    }
+
+    return nil
 }
 
 // Read
@@ -34,42 +42,61 @@ func (s *AlbumService) GetAllAlbums() ([]models.Album, error) {
         albums = append(albums, album)
     }
 
+    // Check for errors during iteration
+    if err := rows.Err(); err != nil {
+        return []models.Album{}, err
+    }
+
+    if len(albums) == 0 {
+        return albums, errors.New("No albums found")
+    }
+
     return albums, nil
 }
 
 func (s *AlbumService) GetAlbumByID(id string) (models.Album, error) {
-    for _, album := range data.Data {
-        if album.ID == id {
-            return album, nil
-        }
+    var album models.Album
+    query := `
+        SELECT * FROM album
+        WHERE id = $1;
+    `
+
+    row := s.DatabaseConnection.QueryRow(query, id)
+    if err := row.Scan(&album.ID, &album.Title, &album.Artist, &album.Price); err != nil {
+        return models.Album{}, err 
     }
 
-    return models.Album{}, errors.New(fmt.Sprintf("Album with ID %s not found", id))
+    return album, nil
 }
 
 // Update
 func (s *AlbumService) UpdateAlbumPrice(price float64, id string) error {
-    for i, album := range data.Data {
-        if album.ID == id {
-            data.Data[i].Price = price
-            return nil
-        }
+    query := `
+        UPDATE album
+        SET price = $1
+        WHERE id = $2;
+    `
+
+    _, err := s.DatabaseConnection.Exec(query, price, id)
+    if err != nil {
+       return err 
     }
 
-    return errors.New(fmt.Sprintf("Album with ID %s not found", id))
-
+    return nil
 }
 
 // Delete
 func (s *AlbumService) DeleteAlbumByID(id string) error {
-    for i, album := range data.Data {
-        if album.ID == id {
-            copy(data.Data[i:], data.Data[i+1:])
-            data.Data = data.Data[:len(data.Data)-1]
-            return nil
-        }
+    query := `
+        DELETE FROM album
+        WHERE id = $1;
+    `
+
+    _, err := s.DatabaseConnection.Exec(query, id)
+    if err != nil {
+        return err
     }
 
-    return errors.New(fmt.Sprintf("Album with ID %s not found", id))
+    return nil
 }
 

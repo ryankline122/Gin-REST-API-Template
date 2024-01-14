@@ -20,16 +20,22 @@ func (h *AlbumHandler) AddAlbum(c *gin.Context) {
         return
     }
 
-    h.AlbumService.AddAlbum(newAlbum)
-    c.JSON(http.StatusCreated, newAlbum)
+    err := h.AlbumService.AddAlbum(newAlbum)
+    if err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+        return
+    }
+    c.JSON(http.StatusCreated, gin.H{"message": "Successfully added album to the database"})
 }
 
 func (h *AlbumHandler) GetAlbums(c *gin.Context) {
     albums, err := h.AlbumService.GetAllAlbums()
     if err != nil {
-        c.JSON(http.StatusNotFound, err)
-    }
+        c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+        return
+    } 
     c.JSON(http.StatusOK, albums)
+    
 }
 
 func (h *AlbumHandler) GetAlbumByID(c *gin.Context) {
@@ -37,9 +43,9 @@ func (h *AlbumHandler) GetAlbumByID(c *gin.Context) {
     album, err := h.AlbumService.GetAlbumByID(id)
     
     if err != nil {
-        c.JSON(http.StatusNotFound, err)
-    }
-    
+        c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+        return
+    } 
     c.JSON(http.StatusOK, album)
 }
 
